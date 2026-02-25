@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>世界计划角色匹配测试 · V0.0.2</title>
+    <title>世界计划角色匹配测试 · 0.0.3</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
@@ -397,6 +398,64 @@
             justify-content: space-between;
             margin-top: 40px;
         }
+
+        /* 实验性选项样式 */
+        .experimental-options {
+            background-color: rgba(255,255,255,0.7);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+            border: 1px dashed #5CE1E6;
+        }
+        .option-item {
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .option-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .option-note {
+            font-size: 12px;
+            color: #888;
+            margin-left: 26px;
+        }
+
+        /* 其他匹配角色按钮区域 */
+        .other-matches {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .match-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .match-btn {
+            padding: 8px 16px;
+            border: 2px solid #5CE1E6;
+            border-radius: 30px;
+            background: white;
+            color: #4A4A6A;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .match-btn:hover {
+            background: #5CE1E6;
+            color: white;
+        }
+        .match-btn.active {
+            background: #5CE1E6;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -413,6 +472,7 @@
     </div>
 
     <div id="test-container">
+        <!-- 开始卡片（已添加实验性选项） -->
         <div class="test-card" id="start-card">
             <div class="question-section">
                 <div class="question-text">哪颗心与你共鸣？世界计划角色测试</div>
@@ -421,12 +481,27 @@
                 <div class="disclaimer">
                     本测试为粉丝二创作品，完全免费，基于《世界计划 彩色舞台》世界观。<br>
                     所有角色版权归属SEGA、Colorful Palette等原公司。<br>
-                    39题·五维·结合角色核心渴望与内心，更贴近「宫益坂」「神山」的她们与他们。
+                    39题·五维·实验性选项默认开启，可随时取消。
                 </div>
+
+                <!-- 实验性选项区域，两个选项默认勾选 -->
+                <div class="experimental-options">
+                    <div class="option-item">
+                        <input type="checkbox" id="weightedMode" checked>
+                        <label for="weightedMode"><strong>结果多样化</strong> (加权算法，突出角色独特性)</label>
+                    </div>
+                    <div class="option-note">※ 开启后可能影响结果客观性，但能增加低频角色的出现机会。</div>
+                    <div class="option-item">
+                        <input type="checkbox" id="multiResultMode" checked>
+                        <label for="multiResultMode"><strong>多结果显示</strong> (展示匹配度≥60%的其他角色)</label>
+                    </div>
+                </div>
+
                 <button class="test-button primary-button button-full" id="start-button">开始测试</button>
             </div>
         </div>
 
+        <!-- 测试卡片（与原相同） -->
         <div class="test-card" id="test-card" style="display: none;">
             <div class="question-section">
                 <div class="question-counter" id="question-counter">1/39 · 请选择符合程度</div>
@@ -453,6 +528,7 @@
             </div>
         </div>
 
+        <!-- 结果卡片（已添加多结果显示区域） -->
         <div class="test-card" id="result-card" style="display: none;">
             <div class="question-section" id="result-header" style="background-color: #5CE1E6;">
                 <div class="result-title">测试结果</div>
@@ -470,6 +546,13 @@
                 <div class="character-info" id="character-info">
                     星乃一歌是Leo/need的主唱，代表色为清新的蓝紫色。她外表冷酷，内心温柔，不善表达但默默关心朋友。
                 </div>
+
+                <!-- 多结果显示区域（初始隐藏，当有符合条件的角色时显示） -->
+                <div id="other-matches-container" style="display: none;" class="other-matches">
+                    <div style="font-size: 16px; color: #4A4A6A; margin-bottom: 10px;">其他高匹配角色：</div>
+                    <div id="match-buttons" class="match-buttons"></div>
+                </div>
+
                 <div class="result-buttons">
                     <button class="test-button secondary-button" id="retry-button">重新测试</button>
                     <button class="test-button primary-button" id="share-button" style="background-color: #5CE1E6;">分享结果</button>
@@ -480,7 +563,7 @@
 
     <script>
         (function() {
-            // 角色数据 (20名非虚拟歌手，已修正心羽学校与绘名关系)
+            // ---------- 角色数据 (20名非虚拟歌手，已修正心羽学校与绘名关系) ----------
             const characters = [
                 {
                     id: 'ichika',
@@ -848,17 +931,17 @@
 
             const dimNames = ['外向性','宜人性','尽责性','神经质','开放性'];
 
-            // ---------- 完善后的题目：更中性，避免褒义倾向 ----------
+            // ---------- 题目（与原v0.0.2相同，已中性化） ----------
             const questions = [
                 // 外向性 0-7 (8题)
                 { text: '在集体中，我希望成为大家关注的中心。', dim: 0 },
                 { text: '与朋友在一起时，我大部分时候会主动活跃气氛。', dim: 0 },
                 { text: '在陌生环境中，我不会观察一段时间再决定是否主动社交，而是尝试尽快融入。', dim: 0 },
-                { text: '我享受和少数密友的深度交流，但并不多于大型聚会。', dim: 0 }, // 反向
+                { text: '我享受和少数密友的深度交流，但并不多于大型聚会。', dim: 0 },
                 { text: '当别人邀请我参加活动时，我通常会欣然接受。', dim: 0 },
-                { text: '在团队项目中，我倾向于和大家一起讨论，而不是独自完成，即便对友可能拖后腿。', dim: 0 },
+                { text: '在团队项目中，我倾向于和大家一起讨论，而不是独自完成，即便队友可能拖后腿。', dim: 0 },
                 { text: '与初次见面的人交谈，对我来说不是太难的事。', dim: 0 },
-                { text: '我不会恐惧过于外向的人', dim: 0 }, // 中性
+                { text: '我不会恐惧过于外向的人', dim: 0 },
                 // 宜人性 8-15 (8题)
                 { text: '我会认为我属于乖孩子', dim: 1 },
                 { text: '看到陌生人难过，我会产生想要安慰的冲动比较强烈。', dim: 1 },
@@ -875,7 +958,7 @@
                 { text: '我对自己在意的事情标准比较高，以至于会让失败的自己烦躁。', dim: 2 },
                 { text: '没有外部监督时，我也能自觉完成任务。', dim: 2 },
                 { text: '一旦开始一个任务，我通常会坚持到完成。', dim: 2 },
-                { text: '即便我运气很差，我也会不断尝试，以为自己或他人负责。', dim: 2 }, // 中性
+                { text: '即便我运气很差，我也会不断尝试，以为自己或他人负责。', dim: 2 },
                 { text: '我会认真对待自己的职责，无论是学习还是社团。', dim: 2 },
                 // 神经质 24-31 (8题)
                 { text: '面临重要考试或活动前，我会感到过于紧张以至于影响生活。', dim: 3 },
@@ -885,7 +968,7 @@
                 { text: '我喜欢对于同伴进行有效的建议，即便可能被视为压力人。', dim: 3 },
                 { text: '做完选择后，经常会想“如果选另一个会怎样”。', dim: 3 },
                 { text: '我对别人的评价十分敏感，会在意很久。', dim: 3 },
-                { text: '在放松的时候，我不能够专注下来干某件事超过 1 个小时。', dim: 3 }, // 
+                { text: '在放松的时候，我不能够专注下来干某件事超过 1 个小时。', dim: 3 },
                 // 开放性 32-38 (7题)
                 { text: '我对新鲜事物总是充满好奇。', dim: 4 },
                 { text: '我喜欢音乐、绘画或文学等艺术形式。', dim: 4 },
@@ -929,6 +1012,20 @@
             const shareResultBtn = document.getElementById('share-button');
 
             const valueLabels = ["完全不符合","不太符合","有些符合","基本符合","完全符合"];
+
+            // 实验性选项元素
+            const weightedModeCheck = document.getElementById('weightedMode');
+            const multiResultModeCheck = document.getElementById('multiResultMode');
+
+            // 预计算全体角色各维度均值（用于加权算法）
+            const dimMeans = [0,0,0,0,0];
+            characters.forEach(char => {
+                for (let i=0; i<5; i++) dimMeans[i] += char.dim[i];
+            });
+            for (let i=0; i<5; i++) dimMeans[i] /= characters.length; // [3.0, 3.9, 4.1, 3.0, 3.8] 大致
+
+            // 存储当前所有角色的匹配结果（用于多结果显示）
+            let currentMatches = [];
 
             function createLoadingRings() {
                 const container = document.getElementById('loading-animation');
@@ -981,7 +1078,9 @@
                 answers[currentIndex] = val;
             }
 
-            function calculateMatch() {
+            // 计算所有角色的匹配度，返回按匹配度降序排列的数组，每个元素包含 char, percent, dist
+            function calculateAllMatches(useWeighted) {
+                // 计算用户各维度平均分
                 let dimSums = [0,0,0,0,0];
                 let dimCounts = [0,0,0,0,0];
                 for (let i = 0; i < totalQuestions; i++) {
@@ -994,37 +1093,47 @@
                 }
                 const userAvg = dimSums.map((sum, idx) => dimCounts[idx] > 0 ? sum / dimCounts[idx] : 3);
 
-                let bestChar = characters[0];
-                let minDist = Infinity;
-                for (let char of characters) {
-                    let dist = 0;
-                    for (let i = 0; i < 5; i++) {
-                        dist += Math.pow(userAvg[i] - char.dim[i], 2);
-                    }
-                    dist = Math.sqrt(dist);
-                    if (dist < minDist) {
-                        minDist = dist;
-                        bestChar = char;
-                    }
-                }
+                const maxDist = Math.sqrt(5 * 16); // 8.944
 
-                const maxDist = Math.sqrt(5 * 16);
-                const matchPercent = Math.max(0, Math.min(100, Math.round(100 * (1 - minDist / maxDist))));
-                return { bestChar, matchPercent };
+                const matches = characters.map(char => {
+                    let dist;
+                    if (useWeighted) {
+                        // 加权欧氏距离：权重 = 1 + 0.5 * |char.dim[i] - dimMeans[i]|
+                        let sum = 0;
+                        for (let i=0; i<5; i++) {
+                            const weight = 1 + 0.5 * Math.abs(char.dim[i] - dimMeans[i]);
+                            sum += weight * Math.pow(userAvg[i] - char.dim[i], 2);
+                        }
+                        dist = Math.sqrt(sum);
+                    } else {
+                        // 普通欧氏距离
+                        let sum = 0;
+                        for (let i=0; i<5; i++) {
+                            sum += Math.pow(userAvg[i] - char.dim[i], 2);
+                        }
+                        dist = Math.sqrt(sum);
+                    }
+                    const percent = Math.max(0, Math.min(100, Math.round(100 * (1 - dist / maxDist))));
+                    return { char, percent, dist };
+                });
+
+                // 按匹配度降序排序
+                matches.sort((a, b) => b.percent - a.percent);
+                return matches;
             }
 
-            function showResult() {
-                const { bestChar, matchPercent } = calculateMatch();
-                resultCharacter.textContent = `你最像${bestChar.name}！`;
-                characterInfo.textContent = bestChar.desc;
-
-                const color = bestChar.color;
+            // 更新结果显示指定角色
+            function displayCharacter(match) {
+                const char = match.char;
+                const percent = match.percent;
+                resultCharacter.textContent = `你最像${char.name}！`;
+                characterInfo.textContent = char.desc;
+                const color = char.color;
                 resultHeader.style.backgroundColor = color;
                 shareResultBtn.style.backgroundColor = color;
                 ringFill.style.stroke = color;
                 percentageText.style.color = color;
-
-                animatePercentageRing(matchPercent);
+                animatePercentageRing(percent);
             }
 
             function animatePercentageRing(targetPercentage) {
@@ -1046,12 +1155,51 @@
                 requestAnimationFrame(step);
             }
 
+            function showResult() {
+                const useWeighted = weightedModeCheck.checked;
+                const useMulti = multiResultModeCheck.checked;
+
+                currentMatches = calculateAllMatches(useWeighted);
+                const best = currentMatches[0];
+                displayCharacter(best);
+
+                // 多结果显示处理
+                const otherContainer = document.getElementById('other-matches-container');
+                const matchButtonsDiv = document.getElementById('match-buttons');
+                if (useMulti) {
+                    // 筛选匹配度 >= 60% 且不是第一名的角色
+                    const others = currentMatches.filter(m => m.percent >= 60 && m.char.id !== best.char.id);
+                    if (others.length > 0) {
+                        matchButtonsDiv.innerHTML = ''; // 清空
+                        others.forEach(m => {
+                            const btn = document.createElement('button');
+                            btn.className = 'match-btn';
+                            btn.textContent = `${m.char.name} (${m.percent}%)`;
+                            btn.addEventListener('click', () => {
+                                // 移除其他按钮的active类，给当前加active
+                                document.querySelectorAll('.match-btn').forEach(b => b.classList.remove('active'));
+                                btn.classList.add('active');
+                                displayCharacter(m);
+                            });
+                            matchButtonsDiv.appendChild(btn);
+                        });
+                        otherContainer.style.display = 'block';
+                    } else {
+                        otherContainer.style.display = 'none';
+                    }
+                } else {
+                    otherContainer.style.display = 'none';
+                }
+            }
+
             function resetTest() {
                 currentIndex = 0;
                 answers.fill(null);
                 startCard.style.display = 'flex';
                 testCard.style.display = 'none';
                 resultCard.style.display = 'none';
+                // 重置多结果显示区域
+                document.getElementById('other-matches-container').style.display = 'none';
             }
 
             async function exportToPNG() {
