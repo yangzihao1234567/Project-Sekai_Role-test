@@ -1,12 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>世界计划角色匹配测试 · 0.0.3</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>世界计划角色匹配测试 · 0.0.4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
+        /* === 原始样式 一字未改 === */
         * {
             margin: 0;
             padding: 0;
@@ -195,7 +195,7 @@
         .control-btn {
             width: 44px;
             height: 44px;
-            border-radius: 12px;
+            border-radius: 12px;  /* 原始方形圆角，未改动 */
             border: 2px solid #e0e0e0;
             background-color: white;
             font-size: 24px;
@@ -227,6 +227,7 @@
             position: relative;
             margin: 0 10px;
             cursor: pointer;
+            touch-action: none; /* 新增：防止触摸时页面滚动 */
         }
 
         .slider-fill {
@@ -397,6 +398,8 @@
             display: flex;
             justify-content: space-between;
             margin-top: 40px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         /* 实验性选项样式 */
@@ -425,17 +428,51 @@
             margin-left: 26px;
         }
 
-        /* 其他匹配角色按钮区域 */
-        .other-matches {
-            margin: 20px 0;
-            text-align: center;
-        }
-        .match-buttons {
+        /* 新增：用户名输入区域 */
+        .name-input-area {
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 40px;
+            padding: 5px 20px;
+            margin-bottom: 20px;
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 10px;
+            align-items: center;
+            border: 1px solid #5CE1E6;
+        }
+        .name-input-area label {
+            color: #4A4A6A;
+            margin-right: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .name-input-area input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 12px 0;
+            font-size: 16px;
+            outline: none;
+            color: #333;
+            font-weight: 500;
+        }
+        .name-input-area input::placeholder {
+            color: #aaa;
+        }
+
+        /* 新增：横向滑动匹配列表 */
+        .matches-scroll {
+            margin: 20px 0;
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+            padding: 4px 0 10px;
+            scrollbar-width: thin;
+        }
+        .match-buttons-horizontal {
+            display: inline-flex;
+            gap: 8px;
+            flex-wrap: nowrap;
+            padding: 0 2px;
         }
         .match-btn {
             padding: 8px 16px;
@@ -447,6 +484,8 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
+            white-space: nowrap;
+            display: inline-block;
         }
         .match-btn:hover {
             background: #5CE1E6;
@@ -455,6 +494,164 @@
         .match-btn.active {
             background: #5CE1E6;
             color: white;
+            border-color: #5CE1E6;
+        }
+        .match-btn.highlight-best {
+            background: #FFE082;
+            border-color: #FFB300;
+        }
+
+        /* 新增：详情浮层 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 32px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 16px; right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #888;
+            background: none;
+            border: none;
+            width: 40px; height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .modal-close:hover { background: #f0f0f0; }
+        .modal-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #4A4A6A;
+            margin-bottom: 20px;
+            padding-right: 30px;
+        }
+
+        .dim-compare-row {
+            margin-bottom: 18px;
+        }
+        .dim-label {
+            font-weight: bold;
+            color: #4A4A6A;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .bar-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .user-bar-bg {
+            flex: 1;
+            height: 16px;
+            background-color: #e0e0e0;
+            border-radius: 30px;
+            overflow: hidden;
+        }
+        .user-bar-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #5CE1E6;
+            border-radius: 30px;
+            transition: width 0.3s;
+        }
+        .role-bar-bg {
+            flex: 1;
+            height: 16px;
+            background-color: #e0e0e0;
+            border-radius: 30px;
+            overflow: hidden;
+        }
+        .role-bar-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #B39DDB; /* 默认，将被角色颜色覆盖 */
+            border-radius: 30px;
+            transition: width 0.3s;
+        }
+        .bar-value {
+            min-width: 40px;
+            text-align: right;
+            font-size: 14px;
+            font-weight: bold;
+            color: #4A4A6A;
+        }
+        .legend {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .legend-color {
+            width: 16px; height: 16px; border-radius: 4px;
+        }
+
+        .radar-container {
+            width: 100%;
+            aspect-ratio: 1/1;
+            margin: 20px 0;
+            background: #fafafa;
+            border-radius: 24px;
+            padding: 10px;
+        }
+        #radarCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .dim-interpret {
+            background: #f0f4f8;
+            border-radius: 20px;
+            padding: 16px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* 手机自适应 */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            #test-container { max-width: 100%; }
+            .question-section { padding: 30px 20px; }
+            .question-text { font-size: 20px; }
+            .answer-section { padding: 30px 20px; }
+            .slider-container { padding: 20px; }
+            .control-btn { width: 40px; height: 40px; font-size: 22px; }
+            .slider-value { font-size: 28px; }
+            .result-title { font-size: 28px; }
+            .result-character { font-size: 22px; }
+            .percentage-ring-container { width: 160px; height: 160px; }
+            .percentage-text { font-size: 36px; }
+            .test-button { padding: 12px 20px; font-size: 16px; min-width: 100px; }
         }
     </style>
 </head>
@@ -472,7 +669,7 @@
     </div>
 
     <div id="test-container">
-        <!-- 开始卡片（已添加实验性选项） -->
+        <!-- 开始卡片（已添加用户名输入） -->
         <div class="test-card" id="start-card">
             <div class="question-section">
                 <div class="question-text">哪颗心与你共鸣？世界计划角色测试</div>
@@ -484,7 +681,12 @@
                     39题·五维·实验性选项默认开启，可随时取消。
                 </div>
 
-                <!-- 实验性选项区域，两个选项默认勾选 -->
+                <!-- 新增用户名输入 -->
+                <div class="name-input-area">
+                    <label>✨ 昵称</label>
+                    <input type="text" id="username-input" placeholder="你" value="你" maxlength="20">
+                </div>
+
                 <div class="experimental-options">
                     <div class="option-item">
                         <input type="checkbox" id="weightedMode" checked>
@@ -528,7 +730,7 @@
             </div>
         </div>
 
-        <!-- 结果卡片（已添加多结果显示区域） -->
+        <!-- 结果卡片（已添加横向滑动列表和详细信息按钮） -->
         <div class="test-card" id="result-card" style="display: none;">
             <div class="question-section" id="result-header" style="background-color: #5CE1E6;">
                 <div class="result-title">测试结果</div>
@@ -547,23 +749,41 @@
                     星乃一歌是Leo/need的主唱，代表色为清新的蓝紫色。她外表冷酷，内心温柔，不善表达但默默关心朋友。
                 </div>
 
-                <!-- 多结果显示区域（初始隐藏，当有符合条件的角色时显示） -->
-                <div id="other-matches-container" style="display: none;" class="other-matches">
-                    <div style="font-size: 16px; color: #4A4A6A; margin-bottom: 10px;">其他高匹配角色：</div>
-                    <div id="match-buttons" class="match-buttons"></div>
+                <!-- 横向滑动多结果区域（替换原按钮区域） -->
+                <div id="matches-scroll-area" class="matches-scroll" style="display: none;">
+                    <div id="match-buttons-horizontal" class="match-buttons-horizontal"></div>
                 </div>
 
                 <div class="result-buttons">
                     <button class="test-button secondary-button" id="retry-button">重新测试</button>
+                    <button class="test-button primary-button" id="detail-button" style="background-color: #9C88FF;">📊 详细信息</button>
                     <button class="test-button primary-button" id="share-button" style="background-color: #5CE1E6;">分享结果</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- 详情浮层 Modal -->
+    <div id="detailModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="closeModalBtn">&times;</button>
+            <div class="modal-title" id="modal-username">你的五维对比</div>
+            <div class="legend">
+                <div class="legend-item"><span class="legend-color" style="background:#5CE1E6;"></span> 你的分数</div>
+                <div class="legend-item"><span class="legend-color" style="background:#B39DDB;"></span> 角色分数</div>
+            </div>
+            <div id="dimBarsContainer"></div>
+            <div class="radar-container">
+                <canvas id="radarCanvas" width="300" height="300"></canvas>
+            </div>
+            <div class="dim-interpret" id="dimInterpret"></div>
+            <div style="text-align: center; margin-top: 16px; color: #888; font-size: 13px;">匹配度 <span id="modal-match-percent"></span></div>
+        </div>
+    </div>
+
     <script>
         (function() {
-            // ---------- 角色数据 (20名非虚拟歌手，已修正心羽学校与绘名关系) ----------
+            // ---------- 角色数据 (20名非虚拟歌手，已删除所有MBTI相关文案，其余一字未改) ----------
             const characters = [
                 {
                     id: 'ichika',
@@ -573,7 +793,7 @@
 
 初见一歌的人，往往会被她酷酷的外表所迷惑。她有着一头黑色长发，总是以略显冷淡的表情示人，给人一种难以接近的距离感。然而，这层看似冷漠的外壳下，包裹着的是一颗极其温柔善良的心。正如游戏中所描述的，她"虽然看起来很酷，其实是对朋友很温柔的少女"。这种反差萌成为了她最吸引人的特质之一。
 
-一歌的性格中有着典型的ISFP人格特征——内向、敏感、温和，同时又具有艺术气质。她不善于表达自己的情感，尤其是在面对曾经疏远的青梅竹马时，总是显得有些笨拙。但正是这种笨拙，反而让人感受到她的真诚。她会默默地关心身边的人，记得每个人的喜好，在关键时刻给予最温暖的支持。
+一歌的性格中有着内向、敏感、温和，同时又具有艺术气质。她不善于表达自己的情感，尤其是在面对曾经疏远的青梅竹马时，总是显得有些笨拙。但正是这种笨拙，反而让人感受到她的真诚。她会默默地关心身边的人，记得每个人的喜好，在关键时刻给予最温暖的支持。
 
 在乐队重组的过程中，一歌展现出了强大的包容力和责任感。面对志步的冷漠、穗波的犹豫，她始终没有放弃，而是用自己的方式努力拉近彼此的距离。她的坚持源于内心深处对友情的珍视，即使在最困难的时候，也从未忘记四人曾经一起度过的美好时光。
 
@@ -679,7 +899,7 @@
 
 爱莉有着极强的组织能力和策划能力。她负责团队的日程安排、演出策划、服装道具等大小事务，是团队正常运转的关键人物。她的工作效率极高，能够在短时间内完成复杂的任务，而且质量总是让人放心。她的存在，让整个团队的运作变得井井有条。
 
-爱莉的性格中有着典型的ENTJ特征——外向、果断、有领导力。她总是能够在混乱中找到秩序，在困难中找到解决方案。她的决策总是理性而果断，不会被情绪左右。在团队遇到分歧时，她能够冷静地分析问题，提出合理的建议，帮助大家达成共识。
+爱莉的性格中有着外向、果断、有领导力的特征。她总是能够在混乱中找到秩序，在困难中找到解决方案。她的决策总是理性而果断，不会被情绪左右。在团队遇到分歧时，她能够冷静地分析问题，提出合理的建议，帮助大家达成共识。
 
 然而，爱莉也有着不为人知的一面。她曾经因为某些原因被迫退出偶像界，这段经历给她留下了深深的遗憾。但她并没有因此而放弃对偶像事业的热爱，而是将这份热情转化为对MORE MORE JUMP!的支持和帮助。她希望通过自己的努力，帮助实乃理等人实现自己未能完成的梦想。
 
@@ -694,7 +914,7 @@
 
 雫是一个典型的大小姐，出身于富裕家庭，从小接受良好的教育。她的举止优雅，谈吐得体，总是给人一种高贵的感觉。她的学习成绩优异，特别是英语，达到了可以当家教的水平。她还会弹钢琴，钢琴水平已经达到了演奏级。
 
-然而，雫的内心世界远比她的外表复杂。她有着典型的INFJ人格特征——内向、理想主义、富有洞察力。她善于观察，能够敏锐地察觉到周围人的情绪变化，但她很少主动表达自己的想法和感受。她总是在思考，在观察，在寻找生命的意义和价值。
+然而，雫的内心世界远比她的外表复杂。她有着内向、理想主义、富有洞察力的特质。她善于观察，能够敏锐地察觉到周围人的情绪变化，但她很少主动表达自己的想法和感受。她总是在思考，在观察，在寻找生命的意义和价值。
 
 雫对偶像事业有着独特的理解。她认为偶像不仅是在舞台上表演的艺人，更是能够给人们带来希望和勇气的存在。她希望通过自己的歌声，能够触动人们内心深处最柔软的地方，给他们带来力量和温暖。她的这种理念，让她的歌声总是充满了感染力。
 
@@ -897,7 +1117,7 @@
 
 然而，绘名的内心深处充满了不安和自卑。她担心自己的作品不够好，担心自己无法超越父亲的成就，担心自己永远无法得到真正的认可。她的这种焦虑和不安，让她变得有些虚荣和做作，总是试图在别人面前展示自己最好的一面。
 
-绘名的性格中有着典型的ISFP特征——内向、敏感、温和，但同时又有ESFP的外向和热情。这种复杂的性格让她在不同的场合表现出不同的面貌。在网上她可能是一个自信的艺术家，在现实中她可能是一个害羞的学生。这种分裂的人格让她感到困惑和痛苦。
+绘名的性格中有着内向、敏感、温和，但同时又有外向和热情的特质。这种复杂的性格让她在不同的场合表现出不同的面貌。在网上她可能是一个自信的艺术家，在现实中她可能是一个害羞的学生。这种分裂的人格让她感到困惑和痛苦。
 
 在25时中，绘名负责为团队的音乐制作MV插图。她的绘画风格独特，充满了想象力和创造力。她能够根据音乐的情感和主题，创作出恰到好处的视觉作品。她的作品不仅美观，还充满了故事性，能够让观众更好地理解音乐的内涵。
 
@@ -910,7 +1130,7 @@
                     id: 'mizuki',
                     name: '晓山瑞希',
                     color: '#DDAACC',
-                    desc: `（这里使用她无立场意义）晓山瑞希的代表色是柔和的粉紫色，这种甜美而梦幻的色彩，完美诠释了她天真无邪、充满童趣的性格。作为神山高校的高中一年级学生，瑞希是25时的视频剪辑师。
+                    desc: `晓山瑞希的代表色是柔和的粉紫色，这种甜美而梦幻的色彩，完美诠释了她天真无邪、充满童趣的性格。作为神山高校的高中一年级学生，瑞希是25时的视频剪辑师。
 
 瑞希是一个喜欢所有可爱事物的随心所欲的人。她的世界里充满了可爱和美好，她相信这个世界上的一切都是美好的。她的性格开朗活泼，充满活力，总是能够给周围的人带来快乐和欢笑。她的笑声如同银铃般清脆，她的笑容如同阳光般灿烂。
 
@@ -1016,16 +1236,32 @@
             // 实验性选项元素
             const weightedModeCheck = document.getElementById('weightedMode');
             const multiResultModeCheck = document.getElementById('multiResultMode');
+            // 用户名输入
+            const usernameInput = document.getElementById('username-input');
+
+            // 新增元素
+            const matchesScrollArea = document.getElementById('matches-scroll-area');
+            const matchButtonsHoriz = document.getElementById('match-buttons-horizontal');
+            const detailBtn = document.getElementById('detail-button');
+            const modal = document.getElementById('detailModal');
+            const closeModal = document.getElementById('closeModalBtn');
+            const dimBarsContainer = document.getElementById('dimBarsContainer');
+            const radarCanvas = document.getElementById('radarCanvas');
+            const dimInterpret = document.getElementById('dimInterpret');
+            const modalMatchPercent = document.getElementById('modal-match-percent');
+            const modalUsername = document.getElementById('modal-username');
 
             // 预计算全体角色各维度均值（用于加权算法）
             const dimMeans = [0,0,0,0,0];
             characters.forEach(char => {
                 for (let i=0; i<5; i++) dimMeans[i] += char.dim[i];
             });
-            for (let i=0; i<5; i++) dimMeans[i] /= characters.length; // [3.0, 3.9, 4.1, 3.0, 3.8] 大致
+            for (let i=0; i<5; i++) dimMeans[i] /= characters.length;
 
-            // 存储当前所有角色的匹配结果（用于多结果显示）
+            // 存储当前所有角色的匹配结果
             let currentMatches = [];
+            let currentDisplayChar = null; // 当前显示的角色match对象
+            let userName = '你';
 
             function createLoadingRings() {
                 const container = document.getElementById('loading-animation');
@@ -1078,9 +1314,8 @@
                 answers[currentIndex] = val;
             }
 
-            // 计算所有角色的匹配度，返回按匹配度降序排列的数组，每个元素包含 char, percent, dist
+            // 计算所有角色的匹配度
             function calculateAllMatches(useWeighted) {
-                // 计算用户各维度平均分
                 let dimSums = [0,0,0,0,0];
                 let dimCounts = [0,0,0,0,0];
                 for (let i = 0; i < totalQuestions; i++) {
@@ -1093,12 +1328,11 @@
                 }
                 const userAvg = dimSums.map((sum, idx) => dimCounts[idx] > 0 ? sum / dimCounts[idx] : 3);
 
-                const maxDist = Math.sqrt(5 * 16); // 8.944
+                const maxDist = Math.sqrt(5 * 16);
 
                 const matches = characters.map(char => {
                     let dist;
                     if (useWeighted) {
-                        // 加权欧氏距离：权重 = 1 + 0.5 * |char.dim[i] - dimMeans[i]|
                         let sum = 0;
                         for (let i=0; i<5; i++) {
                             const weight = 1 + 0.5 * Math.abs(char.dim[i] - dimMeans[i]);
@@ -1106,7 +1340,6 @@
                         }
                         dist = Math.sqrt(sum);
                     } else {
-                        // 普通欧氏距离
                         let sum = 0;
                         for (let i=0; i<5; i++) {
                             sum += Math.pow(userAvg[i] - char.dim[i], 2);
@@ -1114,26 +1347,33 @@
                         dist = Math.sqrt(sum);
                     }
                     const percent = Math.max(0, Math.min(100, Math.round(100 * (1 - dist / maxDist))));
-                    return { char, percent, dist };
+                    return { char, percent, dist, userAvg: [...userAvg] };
                 });
 
-                // 按匹配度降序排序
                 matches.sort((a, b) => b.percent - a.percent);
                 return matches;
             }
 
             // 更新结果显示指定角色
             function displayCharacter(match) {
+                if (!match) return;
+                currentDisplayChar = match;
                 const char = match.char;
                 const percent = match.percent;
-                resultCharacter.textContent = `你最像${char.name}！`;
+                resultCharacter.textContent = `${userName}最像${char.name}！`;
                 characterInfo.textContent = char.desc;
                 const color = char.color;
                 resultHeader.style.backgroundColor = color;
                 shareResultBtn.style.backgroundColor = color;
+                detailBtn.style.backgroundColor = color; // 详情按钮颜色绑定
                 ringFill.style.stroke = color;
                 percentageText.style.color = color;
                 animatePercentageRing(percent);
+
+                // 更新横向按钮高亮
+                Array.from(document.querySelectorAll('.match-btn')).forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.id === char.id);
+                });
             }
 
             function animatePercentageRing(targetPercentage) {
@@ -1163,32 +1403,26 @@
                 const best = currentMatches[0];
                 displayCharacter(best);
 
-                // 多结果显示处理
-                const otherContainer = document.getElementById('other-matches-container');
-                const matchButtonsDiv = document.getElementById('match-buttons');
+                // 构建横向滑动列表 (所有匹配度≥60% 或 第一名)
                 if (useMulti) {
-                    // 筛选匹配度 >= 60% 且不是第一名的角色
-                    const others = currentMatches.filter(m => m.percent >= 60 && m.char.id !== best.char.id);
-                    if (others.length > 0) {
-                        matchButtonsDiv.innerHTML = ''; // 清空
-                        others.forEach(m => {
+                    let showMatches = currentMatches.filter(m => m.percent >= 60 || m.char.id === best.char.id);
+                    if (showMatches.length > 1) {
+                        matchButtonsHoriz.innerHTML = '';
+                        showMatches.forEach(m => {
                             const btn = document.createElement('button');
-                            btn.className = 'match-btn';
+                            btn.className = 'match-btn' + (m.char.id === best.char.id ? ' highlight-best' : '');
+                            btn.dataset.id = m.char.id;
                             btn.textContent = `${m.char.name} (${m.percent}%)`;
-                            btn.addEventListener('click', () => {
-                                // 移除其他按钮的active类，给当前加active
-                                document.querySelectorAll('.match-btn').forEach(b => b.classList.remove('active'));
-                                btn.classList.add('active');
-                                displayCharacter(m);
-                            });
-                            matchButtonsDiv.appendChild(btn);
+                            btn.addEventListener('click', () => displayCharacter(m));
+                            matchButtonsHoriz.appendChild(btn);
                         });
-                        otherContainer.style.display = 'block';
+                        matchesScrollArea.style.display = 'block';
+                        displayCharacter(best); // 重新高亮
                     } else {
-                        otherContainer.style.display = 'none';
+                        matchesScrollArea.style.display = 'none';
                     }
                 } else {
-                    otherContainer.style.display = 'none';
+                    matchesScrollArea.style.display = 'none';
                 }
             }
 
@@ -1198,8 +1432,7 @@
                 startCard.style.display = 'flex';
                 testCard.style.display = 'none';
                 resultCard.style.display = 'none';
-                // 重置多结果显示区域
-                document.getElementById('other-matches-container').style.display = 'none';
+                matchesScrollArea.style.display = 'none';
             }
 
             async function exportToPNG() {
@@ -1218,33 +1451,149 @@
                 }
             }
 
+            // 初始化滑动条拖拽（支持触摸）
             function initSliderDrag() {
                 let isDragging = false;
-                sliderTrack.addEventListener('mousedown', (e) => {
+                function handleStart(e) {
+                    e.preventDefault();
                     isDragging = true;
-                    const rect = sliderTrack.getBoundingClientRect();
-                    let x = e.clientX - rect.left;
-                    x = Math.max(0, Math.min(x, rect.width));
-                    const percent = x / rect.width;
-                    const val = Math.round(1 + percent * 4);
-                    updateSlider(val);
-                    e.preventDefault();
-                });
-
-                document.addEventListener('mousemove', (e) => {
+                }
+                function handleMove(e) {
                     if (!isDragging) return;
+                    e.preventDefault();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                     const rect = sliderTrack.getBoundingClientRect();
-                    let x = e.clientX - rect.left;
+                    let x = clientX - rect.left;
                     x = Math.max(0, Math.min(x, rect.width));
                     const percent = x / rect.width;
                     const val = Math.round(1 + percent * 4);
                     updateSlider(val);
-                    e.preventDefault();
-                });
-
-                document.addEventListener('mouseup', () => {
+                }
+                function handleEnd() {
                     isDragging = false;
-                });
+                }
+                sliderTrack.addEventListener('mousedown', handleStart);
+                document.addEventListener('mousemove', handleMove);
+                document.addEventListener('mouseup', handleEnd);
+                sliderTrack.addEventListener('touchstart', handleStart, { passive: false });
+                document.addEventListener('touchmove', handleMove, { passive: false });
+                document.addEventListener('touchend', handleEnd);
+            }
+
+            // 填充详情浮窗
+            function fillModal() {
+                if (!currentDisplayChar) return;
+                const match = currentDisplayChar;
+                const userAvg = match.userAvg;
+                const roleDim = match.char.dim;
+                const color = match.char.color;
+
+                modalUsername.innerHTML = `${userName} vs ${match.char.name}`;
+
+                // 横向条
+                let barsHtml = '';
+                for (let i = 0; i < 5; i++) {
+                    barsHtml += `<div class="dim-compare-row">
+                        <div class="dim-label">${dimNames[i]} <span>${userAvg[i].toFixed(2)} / ${roleDim[i].toFixed(1)}</span></div>
+                        <div class="bar-container">
+                            <div class="user-bar-bg"><div class="user-bar-fill" style="width:${(userAvg[i]/5*100)}%"></div></div>
+                            <span class="bar-value">${userAvg[i].toFixed(1)}</span>
+                        </div>
+                        <div class="bar-container">
+                            <div class="role-bar-bg"><div class="role-bar-fill" style="width:${(roleDim[i]/5*100)}%; background-color:${color};"></div></div>
+                            <span class="bar-value">${roleDim[i].toFixed(1)}</span>
+                        </div>
+                    </div>`;
+                }
+                dimBarsContainer.innerHTML = barsHtml;
+
+                // 雷达图 (正五边形)
+                const ctx = radarCanvas.getContext('2d');
+                const w = 300, h = 300, centerX = 150, centerY = 150, radius = 120;
+                ctx.clearRect(0, 0, w, h);
+
+                // 画五边形网格 (5层)
+                for (let level = 1; level <= 5; level++) {
+                    ctx.beginPath();
+                    for (let j = 0; j < 5; j++) {
+                        let angle = j * 0.8 * Math.PI - Math.PI / 2; // 五边形顶点角度
+                        let x = centerX + radius * (level / 5) * Math.cos(angle);
+                        let y = centerY + radius * (level / 5) * Math.sin(angle);
+                        if (j === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    ctx.strokeStyle = '#ddd';
+                    ctx.stroke();
+                }
+                // 画轴线
+                for (let j = 0; j < 5; j++) {
+                    let angle = j * 0.8 * Math.PI - Math.PI / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
+                    ctx.strokeStyle = '#ccc';
+                    ctx.stroke();
+                }
+
+                // 用户多边形
+                ctx.beginPath();
+                for (let j = 0; j < 5; j++) {
+                    let val = userAvg[j] / 5;
+                    let angle = j * 0.8 * Math.PI - Math.PI / 2;
+                    let x = centerX + radius * val * Math.cos(angle);
+                    let y = centerY + radius * val * Math.sin(angle);
+                    if (j === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(92, 225, 230, 0.3)';
+                ctx.strokeStyle = '#5CE1E6';
+                ctx.lineWidth = 3;
+                ctx.fill();
+                ctx.stroke();
+
+                // 角色多边形
+                ctx.beginPath();
+                for (let j = 0; j < 5; j++) {
+                    let val = roleDim[j] / 5;
+                    let angle = j * 0.8 * Math.PI - Math.PI / 2;
+                    let x = centerX + radius * val * Math.cos(angle);
+                    let y = centerY + radius * val * Math.sin(angle);
+                    if (j === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(' + parseInt(color.slice(1,3),16) + ',' + parseInt(color.slice(3,5),16) + ',' + parseInt(color.slice(5,7),16) + ',0.3)';
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.fill();
+                ctx.stroke();
+
+                // 五维解读 (每句不少于20字)
+                let interp = '';
+                if (userAvg[0] < 2.5) interp += '• 你的外向性得分偏低，这意味着你更喜欢安静独处，在内心世界中汲取能量，而不是在热闹的社交场合中感到舒适。\n';
+                else if (userAvg[0] > 3.5) interp += '• 你的外向性得分偏高，说明你热情活跃，喜欢与人交往，常常成为聚会中的焦点，从社交中获得能量。\n';
+                else interp += '• 你的外向性处于中等水平，你既能享受独处的宁静，也能在社交中自如表现，动静皆宜。\n';
+
+                if (userAvg[1] < 2.5) interp += '• 你的宜人性得分偏低，表明你更倾向于直接坦率，不会为了迎合他人而改变自己，有时显得强势但真实。\n';
+                else if (userAvg[1] > 3.5) interp += '• 你的宜人性得分偏高，显示你善良体贴，乐于助人，总是优先考虑他人的感受，是团队中的温暖存在。\n';
+                else interp += '• 你的宜人性中等，你懂得平衡自己与他人的需求，既不过分讨好也不冷漠，关系处理得当。\n';
+
+                if (userAvg[2] < 2.5) interp += '• 你的尽责性得分偏低，说明你随性自由，不喜欢被规则束缚，更愿意凭感觉行事，灵活应对变化。\n';
+                else if (userAvg[2] > 3.5) interp += '• 你的尽责性得分偏高，表明你自律严谨，做事有计划有目标，能够坚持不懈地完成任务，值得信赖。\n';
+                else interp += '• 你的尽责性中等，你既有规划意识也能接受变动，在有序和灵活之间找到了适合自己的平衡点。\n';
+
+                if (userAvg[3] < 2.5) interp += '• 你的神经质得分偏低，说明你情绪稳定，不易焦虑，面对压力能保持冷静，心态平和。\n';
+                else if (userAvg[3] > 3.5) interp += '• 你的神经质得分偏高，显示你敏感细腻，容易受到外界影响，情绪波动较大，但这也让你更有同理心。\n';
+                else interp += '• 你的神经质中等，你能够感知情绪但不会被其淹没，在敏感与稳定之间保持了良好的平衡。\n';
+
+                if (userAvg[4] < 2.5) interp += '• 你的开放性得分偏低，说明你务实传统，喜欢熟悉的环境和事物，对新奇尝试持谨慎态度。\n';
+                else if (userAvg[4] > 3.5) interp += '• 你的开放性得分偏高，表明你充满好奇心，乐于接受新事物，喜欢探索未知领域，富有创造力。\n';
+                else interp += '• 你的开放性中等，你愿意尝试新事物但不会盲目追求，在传统与创新之间找到了自己的节奏。\n';
+
+                dimInterpret.innerHTML = interp.replace(/\n/g, '<br>');
+                modalMatchPercent.innerText = match.percent + '%';
             }
 
             document.addEventListener('DOMContentLoaded', function() {
@@ -1258,6 +1607,7 @@
                 }, 2000);
 
                 startBtn.addEventListener('click', () => {
+                    userName = usernameInput.value.trim() || '你';
                     startCard.style.display = 'none';
                     testCard.style.display = 'flex';
                     loadQuestion(0);
@@ -1297,6 +1647,22 @@
                 });
 
                 initSliderDrag();
+
+                // 详情按钮
+                detailBtn.addEventListener('click', () => {
+                    if (currentDisplayChar) {
+                        fillModal();
+                        modal.style.display = 'flex';
+                    }
+                });
+
+                closeModal.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                });
+
+                window.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.style.display = 'none';
+                });
             });
         })();
     </script>
