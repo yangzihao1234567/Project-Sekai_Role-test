@@ -2,7 +2,7 @@
 
 
 本项目采用 GNU General Public License v3.0 开源。
-完整协议请参见 LICENSE 文件。
+完整协议请参见 LICENSE 文件（https://github.com/yangzihao1234567/Project-Sekai_Role-test/blob/main/LICENSE）
 
 在线测评：https://yangzihao1234567.github.io/Project-Sekai_Role-test/
 
@@ -15,4 +15,5 @@
 2.感谢Github@HC-QingShao对于滑块问题的反馈
 
 3.感谢深度求索公司与字节跳动提供的模型，根据《用户协议》，本项目归属和开源合规
+（doubao.com，DeepSeek.com）
 
