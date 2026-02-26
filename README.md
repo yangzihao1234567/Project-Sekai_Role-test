@@ -17,3 +17,5 @@
 3.感谢深度求索公司与字节跳动提供的模型，根据《用户协议》，本项目归属和开源合规
 （doubao.com，DeepSeek.com）
 
+角色相关版权所有：SEGA株式会社，Colorful palette株式会社
+
